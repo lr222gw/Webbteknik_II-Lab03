@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="Binero">
+  <component name="PublishConfigData" autoUpload="Always" serverName="binero.se">
     <serverData>
-      <paths name="Binero">
+      <paths name="binero.se">
         <serverdata>
           <mappings>
             <mapping deploy="/grayfish.se/public_html/labb3" local="$PROJECT_DIR$" web="/" />
