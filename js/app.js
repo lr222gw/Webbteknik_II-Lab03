@@ -8,13 +8,15 @@
 var AppSpace = {
     map : "",
     xmlHttp : "",
+    arrOfMarkerWithInfoObj : [],
+    lastOpenWindow: null,
     Init : function(){
 
         AppSpace.xmlHttp = new XMLHttpRequest();
 
         var mapOptions = {
-            zoom: 8,
-            center: new google.maps.LatLng(0, 0),
+            zoom: 3,
+            center: new google.maps.LatLng(62.907650053064756, 19.05371625649899),
             mapTypeId : google.maps.MapTypeId.ROADMAP //Vilken typ av karta, satelite, väg, etc... ||TERRAIN, SATTELITE
         };
 
@@ -40,8 +42,14 @@ var AppSpace = {
         marker.setMap(AppSpace.map); //Vi säger at markern ska tillhöra kartan AppSpace.map
 
         google.maps.event.addListener(marker,'click',function(){ //Funktion som anropas när en markera trycks på!
-           infoWindow.open(AppSpace.map, marker); // funktionen öppnar infoWindow till en viss marker.
+            //stänger ett tidigare öppet fönster...
+            if(AppSpace.lastOpenWindow != null){
+                AppSpace.lastOpenWindow.close();
+            }
+            infoWindow.open(AppSpace.map, marker); // funktionen öppnar infoWindow till en viss marker.
             // På något magiskt sätt så kommer markerna ihåg vilken infoWindow som hör till dem...
+
+            AppSpace.lastOpenWindow = infoWindow; // kommer ihåg det senaste fönstret så at det kan stängas när nytt öppnas..
         });
 
     },
@@ -57,7 +65,9 @@ var AppSpace = {
 
                 if(AppSpace.xmlHttp.status == 200){ // Om 200 s betyder det att kommunikationen gick bra!
                     var Response = AppSpace.xmlHttp.responseText; // Response kommer att innehålla datan från anropet i JSON-format
-                    console.log(Response);
+                    //console.log(Response);
+                    //return Response;
+                    AppSpace.buildFromData();
                 }
 
             }
@@ -74,9 +84,47 @@ var AppSpace = {
             setTimeout('AppSpace.getNewestTraficInfo()', 3000); //Berättar att vi väntar 3 sekunder tills vi anropar funktionen igen om det inte fungerade
         }
 
+    },
+
+    buildFromData : function(){
+        var arrOfMessages = JSON.parse(AppSpace.xmlHttp.response);
+
+        for(var i = 0; i < arrOfMessages.length;i++){
+           AppSpace.arrOfMarkerWithInfoObj = [new MarkerWithInfo(
+                arrOfMessages[i].latitude,
+                arrOfMessages[i].longitude,
+                arrOfMessages[i].exactlocation,
+                arrOfMessages[i].description,
+                arrOfMessages[i].title,
+                arrOfMessages[i].createddate,
+                arrOfMessages[i].category,
+                arrOfMessages[i].subcategory,
+                arrOfMessages[i].priority).place()];
+
+
+        }
     }
 
 };
+
+//Min klass med allt som har med markern och infon att göra...
+var MarkerWithInfo = function(lat, lng, exactLocation, description, title, date, category, subcategory, priority){
+    this.lat = lat;
+    this.lng = lng;
+    this.exactLocation = exactLocation;
+    this.description = description;
+    this.description = description;
+    this.title = title;
+    this.date = date;
+    this.category = category;
+    this.subcategory = subcategory;
+    this.priority = priority;
+
+    this.place = function(){
+        AppSpace.MarkByPosition(this.lat,this.lng,this.description);
+
+    }
+}
 
 
 window.onload = function(){
