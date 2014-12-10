@@ -7,8 +7,20 @@
 
 var AppSpace = {
 
-     Init : function(){
-        
+    Init : function(){
+        var map;
+
+        var mapOptions = {
+            zoom: 8,
+            center: new google.maps.LatLng(0, 0)
+        };
+
+
+
+        map = new google.maps.Map(
+            document.getElementById('map-canvas'),
+            mapOptions);
+
     }
 
 
@@ -16,12 +28,8 @@ var AppSpace = {
 };
 
 
-
-
-
-
-
 window.onload = function(){
+
     AppSpace.Init();
 };
 
