@@ -10,6 +10,7 @@ var AppSpace = {
     xmlHttp : "",
     arrOfMarkerWithInfoObj : [],
     lastOpenWindow: null,
+    allMarkers : [],
     Init : function(){
 
         AppSpace.xmlHttp = new XMLHttpRequest();
@@ -40,7 +41,7 @@ var AppSpace = {
         }
         var marker = new google.maps.Marker(markerOptions); //Här skapas Markern med innehållet från MarkerOptions
         marker.setMap(AppSpace.map); //Vi säger at markern ska tillhöra kartan AppSpace.map
-
+        AppSpace.allMarkers.push(marker);
         google.maps.event.addListener(marker,'click',function(){ //Funktion som anropas när en markera trycks på!
             //stänger ett tidigare öppet fönster...
             if(AppSpace.lastOpenWindow != null){
@@ -67,7 +68,7 @@ var AppSpace = {
                     var Response = AppSpace.xmlHttp.responseText; // Response kommer att innehålla datan från anropet i JSON-format
                     //console.log(Response);
                     //return Response;
-                    AppSpace.buildFromData();
+                    //AppSpace.buildFromData();
                 }
 
             }
@@ -86,8 +87,52 @@ var AppSpace = {
 
     },
 
-    buildFromData : function(){
+    clearMap : function(){
+        if(AppSpace.allMarkers != null){
+            for (var i = 0; i < AppSpace.allMarkers.length; i++ ) {
+                AppSpace.allMarkers[i].setMap(null);
+            }
+            AppSpace.allMarkers.length = 0;
+        }
+    },
+
+    sorter : function(){
+
+        AppSpace.clearMap();
+
         var arrOfMessages = JSON.parse(AppSpace.xmlHttp.response);
+        var include = [];
+        var choice = null;
+        switch (document.getElementById("showBy").value){
+            case "Alla":
+                choice = -1;
+                break;
+            case "Vagtrafik":
+                choice = 0;
+                break;
+            case "Kollektivtrafik":
+                choice = 1;
+                break;
+            case "PlaneradStorning":
+                choice = 2;
+                break;
+            case "Ovrigt":
+                choice = 3;
+                break;
+            default :
+                choice = -1;
+                break;
+        }
+        for(var i = 0; i < arrOfMessages.length;i++){
+            if(arrOfMessages[i].category == choice || choice == -1){
+                include.push(arrOfMessages[i]);
+            }
+        }
+        AppSpace.buildFromData(include);
+    },
+
+    buildFromData : function(arrOfMessages){
+
 
         for(var i = 0; i < arrOfMessages.length;i++){
            AppSpace.arrOfMarkerWithInfoObj = [new MarkerWithInfo(
@@ -126,6 +171,7 @@ var MarkerWithInfo = function(lat, lng, exactLocation, description, title, date,
     }
 }
 
+document.getElementById("showByButton").onclick = function(){AppSpace.sorter(); };
 
 window.onload = function(){
 
