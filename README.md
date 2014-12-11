@@ -6,7 +6,8 @@ Google:
 - 25 000 anrop på en dag.
 SR:
 - Var snäll och Cacha gärna datan 
-- Inga andra begränsningar
+- Inga andra begränsningar 
+
 ###Hur och hur länga cachar du ditt data för att slippa anropa API:erna i onödan?
 Jag har haft problem med cachning, den slutgiltiga produkten har inte cachening. 
 Jag stötte på problem i slutet av mitt kodande som gjorde att jag satt i ungefär 5 timmar och letade efter problem med cachening,
