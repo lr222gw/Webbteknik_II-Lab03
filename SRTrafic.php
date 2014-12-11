@@ -6,7 +6,8 @@
  * Time: 20:26
  */
 
-//if($_SESSION["cachedDataTimer"] <= time() || isset($_SESSION["cachedDataTimer"])){ //Detta skulle vara min cachening
+
+if(getJsonTimeStamp() < time()){ //Nya cachening
     $url = "http://api.sr.se/api/v2/traffic/messages?format=json";
     $arr = [];
     do{
@@ -28,15 +29,40 @@
 
 
     $out = array_values($arr);
+    $toReturn = json_encode($out);
+    JsonToFile($toReturn);
 
-/*    $_SESSION["cachedDataTimer"] = time() + (60 * 25); //Cachat i 25 minuter
-    $_SESSION["cachedData"] = $out;*/
+    /*    $_SESSION["cachedDataTimer"] = time() + (60 * 25); //Cachat i 25 minuter
+        $_SESSION["cachedData"] = $out;*/
 //$arr = json_decode($arr);
-/*}else{
-    $out = $_SESSION["cachedData"];
-}*/
+    /*}else{
+        $out = $_SESSION["cachedData"];
+    }*/
 
+}
 
+echo GetJsonFileData();
 
-echo json_encode($out);
+function JsonToFile($jsonData){
+    $timeToCache = time() + (60 * 25); //cachar i 25 minuter
+    $fp = fopen("timeStamp.txt", "w");
+    fwrite($fp, $timeToCache);
+    fclose($fp);
 
+    $tester = "yolo";
+    $fp = fopen("newstamp.txt", "w");
+    fwrite($fp, $tester);
+    fclose($fp);
+
+    $fp = fopen("cachedJson.json", "w");
+    fwrite($fp, $jsonData);
+    fclose($fp);
+}
+function getJsonTimeStamp(){
+    $timestamp = file_get_contents("timeStamp.txt");
+    return (int)$timestamp;
+}
+function GetJsonFileData(){
+    $json = file_get_contents("cachedJson.json");
+    return $json;
+}

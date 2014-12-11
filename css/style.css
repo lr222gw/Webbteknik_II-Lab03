@@ -1,5 +1,5 @@
 html, body {
-    height: 100%;
+    height: 97%;
     margin: 0px;
     padding: 0px
 }
@@ -20,7 +20,7 @@ div#listcontent {
 
 #map-canvas {
     width: 50%;
-    height: 65%;
+    height: 100%;
 }
 
 .listclass{

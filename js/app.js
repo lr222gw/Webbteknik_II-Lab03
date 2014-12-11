@@ -52,7 +52,8 @@ var AppSpace = {
 
     MarkByPosition : function(lat, lng, infoForWindow,id, obj){
         var infoWindowOptions = { // Inställningar för infoWindow-objektet
-            content : "<h2>"+obj.title+"</h2><h3>"+AppSpace.categoryToWord(obj.category)+"</h3><p>"+new Date(parseInt(obj.date.slice(6,obj.date.length -2)))+"</p>"+infoForWindow     // Innehållet i InfoWindow... (hämtas från parametern..)
+            content : "<h2>"+obj.title+"</h2><h3>"+AppSpace.categoryToWord(obj.category)+"</h3><p>"+new Date(parseInt(obj.date.slice(6,obj.date.length -2)))+"</p>"+infoForWindow,     // Innehållet i InfoWindow... (hämtas från parametern..)
+            disableAutoPan : true
         }
 
         var infoWindow = new google.maps.InfoWindow(infoWindowOptions); // Skapar InfoWindow med innehållet från InfoWindowOptions
@@ -65,6 +66,17 @@ var AppSpace = {
         marker.setMap(AppSpace.map); //Vi säger at markern ska tillhöra kartan AppSpace.map
         AppSpace.allMarkers.push(marker);
 
+        //Kontrollerar om en markers infoWindow var öppen, om den var det så ska den öppnas igen.
+        //Om den vad öppen, men inte finns på nuvarande karta så ska den stängas.
+        if(AppSpace.lastOpenWindow != null){
+            if(AppSpace.findIfActive()){
+                //AppSpace.lastOpenWindow.gm_bindings_.disableAutoPan =  {disableAutoPan : true}; <-Duze Nuts Wurkz... :(
+                AppSpace.lastOpenWindow.open(AppSpace.map,AppSpace.lastUsedMarker); //Öppna rutan om den finns på kartan och var öppen innan uppdatering...
+            }else{
+                AppSpace.lastOpenWindow.close(); //Stänger ner rutan om den inte finns på kartan
+            }
+        }
+
 
         var listButton = AppSpace.PlaceInList(obj);
 
@@ -76,6 +88,7 @@ var AppSpace = {
             infoWindow.open(AppSpace.map, marker); // funktionen öppnar infoWindow till en viss marker.
             // På något magiskt sätt så kommer markerna ihåg vilken infoWindow som hör till dem...
 
+            AppSpace.lastUsedMarker = marker;
             AppSpace.lastOpenWindow = infoWindow; // kommer ihåg det senaste fönstret så at det kan stängas när nytt öppnas..
         }
 
@@ -105,19 +118,19 @@ var AppSpace = {
                         //console.log(Response);
                         //return Response;
                         //AppSpace.buildFromData();
-                    }
+                        AppSpace.sorter(); //efter datan hämtas, kör ett anrop.
+                        setTimeout(AppSpace.getNewestTraficInfo, 3000); //Berättar att vi väntar 3 sekunder tills vi anropar funktionen igen om det inte fungerade
+                    }//OBS^ ska inte skrivas med strängar. Och inte ()... (annars drar den igång en ny instans av javascript)
                 }
             }
 
-            if(AppSpace.xmlHttp.readyState == 4 || AppSpace.xmlHttp.readyState == 0){ // Kollar om objektet är redo för kommunikation
+            //if(AppSpace.xmlHttp.readyState == 4 || AppSpace.xmlHttp.readyState == 0){ // Kollar om objektet är redo för kommunikation
 
                 AppSpace.xmlHttp.open("GET", "SRTrafic.php",true);          //Förbereder: Php-filen SRTrafic kommer att anropas...
                 AppSpace.xmlHttp.onreadystatechange = handleServerResponse;// Berättar vilken funktion som ska köras när man får response tillbaka från servern.
                 AppSpace.xmlHttp.send(null);                              // Slutför anropet....
 
-            }else{
-                setTimeout('AppSpace.getNewestTraficInfo()', 3000); //Berättar att vi väntar 3 sekunder tills vi anropar funktionen igen om det inte fungerade
-            }
+            //}
         /*}else{
             AppSpace.xmlHttp = JSON.parse(localStorage["jsonData"]);
         }*/
@@ -134,9 +147,21 @@ var AppSpace = {
         document.getElementById("traficInfoList").innerText = "";
     },
 
+    findIfActive : function(){
+        if(AppSpace.allMarkers != null){
+            for (var i = 0; i < AppSpace.allMarkers.length; i++ ) {
+                if(AppSpace.allMarkers[i].id == AppSpace.lastUsedMarker.id){
+                    return true;
+                }
+            }
+        }
+        return false;
+    },
+
     sorter : function(){
         //När knappen för uppdatering tryck hämtas datan från cache, här sorteras datan och tar bara fram vad användaren valt att se
         AppSpace.clearMap();
+
         //AppSpace.getNewestTraficInfo();
 
         var arrOfMessages = JSON.parse(AppSpace.xmlHttp.response); //AppSpace.xmlHttp.response;
