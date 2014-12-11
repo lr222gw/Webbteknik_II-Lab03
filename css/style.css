@@ -3,7 +3,44 @@ html, body {
     margin: 0px;
     padding: 0px
 }
+
+body {
+    background-color: rgb(91, 171, 219);
+    margin: 10px;
+}
+
+div#listcontent {
+    padding: 5px;
+    background-color: rgb(62, 118, 152);
+    float: left;
+    height: 90%;
+    margin-left: 10px;
+    padding-bottom: 35px;
+}
+
 #map-canvas {
     width: 50%;
     height: 65%;
+}
+
+.listclass{
+    background-color: rgb(145, 232, 229);
+    margin: 10px;
+    padding: 5px;
+    padding-top: 1px;
+    line-height: 5px;
+    border-radius: 5px;
+}
+
+.listclass:hover{
+    cursor: pointer;
+}
+
+div#map-canvas {
+    float: left;
+}
+
+#traficInfoList {
+    height: 100%;
+    overflow: auto;
 }

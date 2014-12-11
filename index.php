@@ -1,6 +1,10 @@
 <?php
 header("Access-Control-Allow-Origin: *");
+/*if(count($_SESSION) == 0){
+    session_start();
+}*/
 
+//var_dump($_SESSION);
 
 $ret = "
 <!DOCTYPE html>
@@ -14,8 +18,8 @@ $ret = "
 <body>
 
 
-<div id='map-canvas''></div>
-<div id='traficInfoList'>
+<div id='map-canvas'></div>
+<div id='listcontent'>
     <select id='showBy'>
         <option value='Alla'>Alla</option>
         <option value='Vagtrafik'>Vägtrafik</option>
@@ -24,6 +28,8 @@ $ret = "
         <option value='Ovrigt'>Övrigt</option>
     </select>
     <input id='showByButton' type='submit' value='Uppdatera'>
+
+    <div id='traficInfoList'></div>
 </div>
 
 <script src='//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'></script>

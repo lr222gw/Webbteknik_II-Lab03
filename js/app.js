@@ -29,9 +29,30 @@ var AppSpace = {
 
     },
 
-    MarkByPosition : function(lat, lng, infoForWindow){
+    categoryToWord : function(category){
+        switch (category){
+            case 0:
+                return "Vägtrafik";
+                break;
+            case 1:
+                return "Kollektivtrafik"
+                break;
+            case 2:
+                return "Planerad Störning";
+                break;
+            case 3:
+                return "Övrigt";
+                break;
+            default :
+                return null;
+                break;
+        }
+        return null;
+    },
+
+    MarkByPosition : function(lat, lng, infoForWindow,id, obj){
         var infoWindowOptions = { // Inställningar för infoWindow-objektet
-            content : infoForWindow     // Innehållet i InfoWindow... (hämtas från parametern..)
+            content : "<h2>"+obj.title+"</h2><h3>"+AppSpace.categoryToWord(obj.category)+"</h3><p>"+new Date(parseInt(obj.date.slice(6,obj.date.length -2)))+"</p>"+infoForWindow     // Innehållet i InfoWindow... (hämtas från parametern..)
         }
 
         var infoWindow = new google.maps.InfoWindow(infoWindowOptions); // Skapar InfoWindow med innehållet från InfoWindowOptions
@@ -40,9 +61,14 @@ var AppSpace = {
             position : new google.maps.LatLng(lat, lng)
         }
         var marker = new google.maps.Marker(markerOptions); //Här skapas Markern med innehållet från MarkerOptions
+        marker.id = id;
         marker.setMap(AppSpace.map); //Vi säger at markern ska tillhöra kartan AppSpace.map
         AppSpace.allMarkers.push(marker);
-        google.maps.event.addListener(marker,'click',function(){ //Funktion som anropas när en markera trycks på!
+
+
+        var listButton = AppSpace.PlaceInList(obj);
+
+        var doWhenPressed = function(){ //Funktion som anropas när en markera trycks på!
             //stänger ett tidigare öppet fönster...
             if(AppSpace.lastOpenWindow != null){
                 AppSpace.lastOpenWindow.close();
@@ -51,39 +77,50 @@ var AppSpace = {
             // På något magiskt sätt så kommer markerna ihåg vilken infoWindow som hör till dem...
 
             AppSpace.lastOpenWindow = infoWindow; // kommer ihåg det senaste fönstret så at det kan stängas när nytt öppnas..
-        });
+        }
 
-    },
+        listButton.onclick = function(){doWhenPressed();};
+        google.maps.event.addListener(marker,'click', doWhenPressed);
 
-    handleJSONData : function($JsonData){
-        $JsonData;
+
+
     },
 
     getNewestTraficInfo : function(){
+        /*var nut = false;
+        if(localStorage["jsonDataTimeStamp"] == undefined){
+            nut = true;
+        }*/
 
-        var handleServerResponse = function(){ // körs varje gång ett anrops slutförst med send()...
-            if(AppSpace.xmlHttp.readyState == 4){ // Om state är 4 så är objetket klart med kommunikationen
+        //if(parseInt(localStorage["jsonDataTimeStamp"]) <= new Date().getTime() || nut){ //cachening mot LocalStorage
 
-                if(AppSpace.xmlHttp.status == 200){ // Om 200 s betyder det att kommunikationen gick bra!
-                    var Response = AppSpace.xmlHttp.responseText; // Response kommer att innehålla datan från anropet i JSON-format
-                    //console.log(Response);
-                    //return Response;
-                    //AppSpace.buildFromData();
+            var handleServerResponse = function(){ // körs varje gång ett anrops slutförst med send()...
+                if(AppSpace.xmlHttp.readyState == 4){ // Om state är 4 så är objetket klart med kommunikationen
+
+                    if(AppSpace.xmlHttp.status == 200){ // Om 200 s betyder det att kommunikationen gick bra!
+                        //var Response = AppSpace.xmlHttp.responseText; // Response kommer att innehålla datan från anropet i JSON-format
+                        //AppSpace.xmlHttp.responseText = Response;
+                        //localStorage["jsonData"] = AppSpace.xmlHttp;//JSON.stringify(AppSpace.xmlHttp);
+                        //localStorage["jsonDataTimeStamp"] = new Date().getTime() + (4000 );//* 25);
+                        //console.log(Response);
+                        //return Response;
+                        //AppSpace.buildFromData();
+                    }
                 }
-
             }
-        }
 
+            if(AppSpace.xmlHttp.readyState == 4 || AppSpace.xmlHttp.readyState == 0){ // Kollar om objektet är redo för kommunikation
 
-        if(AppSpace.xmlHttp.readyState == 4 || AppSpace.xmlHttp.readyState == 0){ // Kollar om objektet är redo för kommunikation
+                AppSpace.xmlHttp.open("GET", "SRTrafic.php",true);          //Förbereder: Php-filen SRTrafic kommer att anropas...
+                AppSpace.xmlHttp.onreadystatechange = handleServerResponse;// Berättar vilken funktion som ska köras när man får response tillbaka från servern.
+                AppSpace.xmlHttp.send(null);                              // Slutför anropet....
 
-            AppSpace.xmlHttp.open("GET", "SRTrafic.php",true);          //Förbereder: Php-filen SRTrafic kommer att anropas...
-            AppSpace.xmlHttp.onreadystatechange = handleServerResponse;// Berättar vilken funktion som ska köras när man får response tillbaka från servern.
-            AppSpace.xmlHttp.send(null);                              // Slutför anropet....
-
-        }else{
-            setTimeout('AppSpace.getNewestTraficInfo()', 3000); //Berättar att vi väntar 3 sekunder tills vi anropar funktionen igen om det inte fungerade
-        }
+            }else{
+                setTimeout('AppSpace.getNewestTraficInfo()', 3000); //Berättar att vi väntar 3 sekunder tills vi anropar funktionen igen om det inte fungerade
+            }
+        /*}else{
+            AppSpace.xmlHttp = JSON.parse(localStorage["jsonData"]);
+        }*/
 
     },
 
@@ -94,13 +131,15 @@ var AppSpace = {
             }
             AppSpace.allMarkers.length = 0;
         }
+        document.getElementById("traficInfoList").innerText = "";
     },
 
     sorter : function(){
-
+        //När knappen för uppdatering tryck hämtas datan från cache, här sorteras datan och tar bara fram vad användaren valt att se
         AppSpace.clearMap();
+        //AppSpace.getNewestTraficInfo();
 
-        var arrOfMessages = JSON.parse(AppSpace.xmlHttp.response);
+        var arrOfMessages = JSON.parse(AppSpace.xmlHttp.response); //AppSpace.xmlHttp.response;
         var include = [];
         var choice = null;
         switch (document.getElementById("showBy").value){
@@ -123,12 +162,26 @@ var AppSpace = {
                 choice = -1;
                 break;
         }
+
+        var idExist = false;
         for(var i = 0; i < arrOfMessages.length;i++){
             if(arrOfMessages[i].category == choice || choice == -1){
-                include.push(arrOfMessages[i]);
+                idExist = false;
+                //en extra forloop för att kontrollera att samma Id inte används fler gånger = meddelandet visas fler gånger..
+                for(var j = 0; j < include.length; j++){
+
+
+                    if(include[j].id == arrOfMessages[i].id){
+                        idExist = true;
+
+                    }
+                }
+                if(idExist == false){
+                    include.push(arrOfMessages[i]);
+                }
             }
         }
-        AppSpace.buildFromData(include);
+        AppSpace.buildFromData(include.reverse());
     },
 
     buildFromData : function(arrOfMessages){
@@ -144,20 +197,43 @@ var AppSpace = {
                 arrOfMessages[i].createddate,
                 arrOfMessages[i].category,
                 arrOfMessages[i].subcategory,
-                arrOfMessages[i].priority).place()];
+                arrOfMessages[i].priority,
+                arrOfMessages[i].id).place()];
 
 
         }
+    },
+    PlaceInList : function(markerWithInfoObj){
+        var listcontainer = document.getElementById("traficInfoList");
+
+        var div = document.createElement("div");
+        var title = document.createElement("h4");
+        var place = document.createElement("p");
+        var date = document.createElement("p");
+
+        div.className="listclass";
+        title.innerText = markerWithInfoObj.title;
+        place.innerText = markerWithInfoObj.exactLocation;
+        date.innerText =  new Date(parseInt((markerWithInfoObj.date.slice(6,markerWithInfoObj.date.length -2)))); // (?) finns det bättre lösning?
+
+        div.appendChild(title);
+        div.appendChild(place);
+        div.appendChild(date);
+        listcontainer.appendChild(div);
+
+        return div;
+
+
     }
 
 };
 
 //Min klass med allt som har med markern och infon att göra...
-var MarkerWithInfo = function(lat, lng, exactLocation, description, title, date, category, subcategory, priority){
+var MarkerWithInfo = function(lat, lng, exactLocation, description, title, date, category, subcategory, priority, id){
+    this.id = id;
     this.lat = lat;
     this.lng = lng;
     this.exactLocation = exactLocation;
-    this.description = description;
     this.description = description;
     this.title = title;
     this.date = date;
@@ -166,8 +242,7 @@ var MarkerWithInfo = function(lat, lng, exactLocation, description, title, date,
     this.priority = priority;
 
     this.place = function(){
-        AppSpace.MarkByPosition(this.lat,this.lng,this.description);
-
+        AppSpace.MarkByPosition(this.lat,this.lng,this.description, this.id, this);
     }
 }
 

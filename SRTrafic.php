@@ -6,28 +6,36 @@
  * Time: 20:26
  */
 
-$url = "http://api.sr.se/api/v2/traffic/messages?format=json";
-$arr = [];
-do{
-    $contentFromSR = file_get_contents($url);
-//$contentFromSR = json_encode($contentFromSR);
-    $contentFromSRDecoded = json_decode($contentFromSR);
+//if($_SESSION["cachedDataTimer"] <= time() || isset($_SESSION["cachedDataTimer"])){ //Detta skulle vara min cachening
+    $url = "http://api.sr.se/api/v2/traffic/messages?format=json";
+    $arr = [];
+    do{
+        $contentFromSR = file_get_contents($url);
+        //$contentFromSR = json_encode($contentFromSR);
+        $contentFromSRDecoded = json_decode($contentFromSR);
 
-    if(count($arr) >= 100){ // om vi redan har 100 poster eller mer så ska vi avbryta..
-        break;
-    }
+        if(count($arr) >= 100){ // om vi redan har 100 poster eller mer så ska vi avbryta..
+            break;
+        }
 
-    for($i=0; $i < count($contentFromSRDecoded->messages); $i++){
-        array_push($arr, $contentFromSRDecoded->messages[$i]);  // Lägger in datan i en array så att vi har all data samlad där
-    }
+        for($i=0; $i < count($contentFromSRDecoded->messages); $i++){
+            array_push($arr, $contentFromSRDecoded->messages[$i]);  // Lägger in datan i en array så att vi har all data samlad där
+        }
 
-    $url = $contentFromSRDecoded->pagination->nextpage; //Kollar om det finns en till sida att hämta data från
+        $url = $contentFromSRDecoded->pagination->nextpage; //Kollar om det finns en till sida att hämta data från
 
-}while($url != null);
+    }while($url != null);
 
 
-$out = array_values($arr);
+    $out = array_values($arr);
+
+/*    $_SESSION["cachedDataTimer"] = time() + (60 * 25); //Cachat i 25 minuter
+    $_SESSION["cachedData"] = $out;*/
 //$arr = json_decode($arr);
+/*}else{
+    $out = $_SESSION["cachedData"];
+}*/
+
 
 
 echo json_encode($out);
